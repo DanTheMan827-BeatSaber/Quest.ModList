@@ -112,34 +112,38 @@ MAKE_HOOK_MATCH(MainMenuViewController_DidActivate, &MainMenuViewController::Did
         failedEarlyModsText = string_format("%lu early mod failed to load!", failedEarlyMods.size());
     }
 
-    TextMeshProUGUI* modsTitleText = Lite::CreateText(layoutTransform, failedModsText);
-    modsTitleText->set_fontSize(5.0f);
-    modsTitleText->set_alignment(TextAlignmentOptions::TopLeft);
+    if(failedMods.size() > 0) {
+        TextMeshProUGUI* modsTitleText = Lite::CreateText(layoutTransform, failedModsText);
+        modsTitleText->set_fontSize(5.0f);
+        modsTitleText->set_alignment(TextAlignmentOptions::TopLeft);
 
-    Lite::CreateText(layoutTransform, "_______________________________");
+        Lite::CreateText(layoutTransform, "_______________________________");
 
-    // Add the failed mods to the GUI
-    for(std::pair<std::string, std::string> failedMod : failedMods) {
-        TextMeshProUGUI* modText = Lite::CreateText(layoutTransform, string_format("<color=red>%s</color> didn't load because: \n%s", failedMod.first.c_str(), failedMod.second.c_str()));
-        modText->set_overflowMode(TextOverflowModes::Ellipsis);
-        modText->set_fontSize(3.5f);
+        // Add the failed mods to the GUI
+        for(std::pair<std::string, std::string> failedMod : failedMods) {
+            TextMeshProUGUI* modText = Lite::CreateText(layoutTransform, string_format("<color=red>%s</color> didn't load because: \n%s", failedMod.first.c_str(), failedMod.second.c_str()));
+            modText->set_overflowMode(TextOverflowModes::Ellipsis);
+            modText->set_fontSize(3.5f);
 
-        Lite::AddHoverHint(modText->get_gameObject(), failedMod.second); // Show the full fail reason in a hover hint, since there most likely won't be enough space in the modal view
+            Lite::AddHoverHint(modText->get_gameObject(), failedMod.second); // Show the full fail reason in a hover hint, since there most likely won't be enough space in the modal view
+        }
     }
 
-    TextMeshProUGUI* earlyModsTitleText = Lite::CreateText(layoutTransform, failedEarlyModsText);
-    earlyModsTitleText->set_fontSize(5.0f);
-    earlyModsTitleText->set_alignment(TextAlignmentOptions::TopLeft);
+    if(failedEarlyMods.size() > 0) {
+        TextMeshProUGUI* earlyModsTitleText = Lite::CreateText(layoutTransform, failedEarlyModsText);
+        earlyModsTitleText->set_fontSize(5.0f);
+        earlyModsTitleText->set_alignment(TextAlignmentOptions::TopLeft);
 
-    Lite::CreateText(layoutTransform, "_______________________________");
+        Lite::CreateText(layoutTransform, "_______________________________");
 
-    // Add the failed mods to the GUI
-    for(std::pair<std::string, std::string> failedMod : failedEarlyMods) {
-        TextMeshProUGUI* modText = Lite::CreateText(layoutTransform, string_format("<color=red>%s</color> didn't load because: \n%s", failedMod.first.c_str(), failedMod.second.c_str()));
-        modText->set_overflowMode(TextOverflowModes::Ellipsis);
-        modText->set_fontSize(3.5f);
+        // Add the failed mods to the GUI
+        for(std::pair<std::string, std::string> failedMod : failedEarlyMods) {
+            TextMeshProUGUI* modText = Lite::CreateText(layoutTransform, string_format("<color=red>%s</color> didn't load because: \n%s", failedMod.first.c_str(), failedMod.second.c_str()));
+            modText->set_overflowMode(TextOverflowModes::Ellipsis);
+            modText->set_fontSize(3.5f);
 
-        Lite::AddHoverHint(modText->get_gameObject(), failedMod.second); // Show the full fail reason in a hover hint, since there most likely won't be enough space in the modal view
+            Lite::AddHoverHint(modText->get_gameObject(), failedMod.second); // Show the full fail reason in a hover hint, since there most likely won't be enough space in the modal view
+        }
     }
 
     getLogger().info("Showing fail dialog . . .");
