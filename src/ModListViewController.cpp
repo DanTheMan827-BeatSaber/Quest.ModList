@@ -14,13 +14,13 @@ using namespace UnityEngine::UI;
 
 #include "TMPro/TextAlignmentOptions.hpp"
 
-#include "questui/shared/BeatSaberUI.hpp"
-using namespace QuestUI::BeatSaberUI;
+#include "bsml/shared/BSML-Lite.hpp"
+using namespace BSML::Lite;;
 
 #include "TMPro/TextMeshProUGUI.hpp"
 using namespace TMPro;
 
-#include "modloader/shared/modloader.hpp"
+#include "scotland2/shared/modloader.h"
 
 struct ListItem {
     std::string content;
@@ -102,17 +102,42 @@ void ModListViewController::DidActivate(bool firstActivation, bool addedToHierar
     getLogger().info("Adding loaded mods . . .");
     // Find the list of all loaded mods
     std::vector<ListItem> loadedMods;
-    for(const auto& modEntry : Modloader::getMods()) {
-        const Mod& mod = modEntry.second;
-        getLogger().info("Adding mod %s", mod.info.id.c_str());
+    auto modloaderLoadedMods = modloader_get_loaded();
+    for(int i = 0; i < modloaderLoadedMods.size; i++) {
+        const CModResult& mod = modloaderLoadedMods.array[i];
+        
+        std::string libsPath = string_format("%s/mods", modloader_get_files_dir());
+        if(!std::string(mod.path).starts_with(libsPath)) {
+            continue;
+        }
+
+        getLogger().info("Adding mod %s", mod.info.id);
         ListItem item;
-        item.content = "<color=green>" + mod.info.id + "</color><color=white> v" + mod.info.version;
+        item.content = string_format("<color=green>%s</color><color=white> v%s", mod.info.id, mod.info.version);
         loadedMods.push_back(item);
     }
 
-    // Find the info about why the libraries in the mods directory loaded/didn't load
+    std::vector<ListItem> loadedEarlyMods;
+    auto modloaderLoadedEarlyMods = modloader_get_loaded();
+    for(int i = 0; i < modloaderLoadedEarlyMods.size; i++) {
+        const CModResult& mod = modloaderLoadedEarlyMods.array[i];
+        
+        std::string libsPath = string_format("%s/early_mods", modloader_get_files_dir());
+        if(!std::string(mod.path).starts_with(libsPath)) {
+            continue;
+        }
+
+        getLogger().info("Adding mod %s", mod.info.id);
+        ListItem item;
+        item.content = string_format("<color=green>%s</color><color=white> v%s", mod.info.id, mod.info.version);
+        loadedEarlyMods.push_back(item);
+    }
+
+    // Find the info about why the libraries in the mods or early_mods directory loaded/didn't load
     // Make sure to find the mods path with the correct application ID
     LibraryLoadInfo& modsLoadInfo = GetModsLoadInfo();
+    // LibraryLoadInfo& earlyModsLoadInfo = GetEarlyModsLoadInfo();
+    // modsLoadInfo.insert(earlyModsLoadInfo.begin(), earlyModsLoadInfo.end());
 
     std::vector<ListItem> failedMods;
     getLogger().info("Checking for failed mods . . .");
@@ -121,14 +146,31 @@ void ModListViewController::DidActivate(bool firstActivation, bool addedToHierar
         if(modLoadPair.second.has_value()) {
             getLogger().debug("Adding failed mod %s", modLoadPair.first.c_str());
             ListItem item;
-            item.content = "<color=red>" + modLoadPair.first + " (failed)";
+            item.content = string_format("<color=red>%s (failed)", modLoadPair.first.c_str());
             item.hoverHint = *modLoadPair.second; // Allow you to hover over the mod to see the fail reason
             failedMods.push_back(item);
         }
     }
 
+    LibraryLoadInfo& earlyModsLoadInfo = GetEarlyModsLoadInfo();
+
+    std::vector<ListItem> failedEarlyMods;
+    getLogger().info("Checking for failed mods . . .");
+    for(std::pair<std::string, std::optional<std::string>> modLoadPair : earlyModsLoadInfo) {
+        // If there was an error loading the library, add it to the list in red
+        if(modLoadPair.second.has_value()) {
+            getLogger().debug("Adding failed mod %s", modLoadPair.first.c_str());
+            ListItem item;
+            item.content = string_format("<color=red>%s (failed)", modLoadPair.first.c_str());
+            item.hoverHint = *modLoadPair.second; // Allow you to hover over the mod to see the fail reason
+            failedEarlyMods.push_back(item);
+        }
+    }
+
     // Create lists for each group
+    CreateListWithTitle(mainLayout->get_transform(), "Loaded Early Mods", loadedEarlyMods);
     CreateListWithTitle(mainLayout->get_rectTransform(), "Loaded Mods", loadedMods);
+    CreateListWithTitle(mainLayout->get_transform(), "Failed Early Mods", failedEarlyMods);
     CreateListWithTitle(mainLayout->get_rectTransform(), "Failed Mods", failedMods);
     CreateListWithTitle(mainLayout->get_rectTransform(), "Libraries", librariesList);
 }

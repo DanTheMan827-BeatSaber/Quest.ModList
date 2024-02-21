@@ -6,9 +6,9 @@
 using namespace ModList;
 
 #include "custom-types/shared/register.hpp"
-#include "questui/shared/QuestUI.hpp"
-#include "questui/shared/BeatSaberUI.hpp"
-using namespace QuestUI;
+#include "bsml/shared/BSML-Lite.hpp"
+#include "bsml/shared/BSML.hpp"
+using namespace BSML;
 
 #include "beatsaber-hook/shared/utils/utils-functions.h"
 
@@ -26,7 +26,7 @@ using namespace UnityEngine::UI;
 #include "TMPro/TextAlignmentOptions.hpp"
 using namespace TMPro;
 
-static ModInfo modInfo; // Stores the ID and version of our mod, and is sent to the modloader upon startup
+static modloader::ModInfo modInfo{MOD_ID, VERSION, 0}; // Stores the ID and version of our mod, and is sent to the modloader upon startup
 
 // Loads the config from disk using our modInfo, then returns it for use
 Configuration& getConfig() {
@@ -57,6 +57,7 @@ MAKE_HOOK_MATCH(MainMenuViewController_DidActivate, &MainMenuViewController::Did
 
     getLogger().info("Checking for failed mods . . .");
     LibraryLoadInfo& modsLoadInfo = GetModsLoadInfo();
+    LibraryLoadInfo& earlyModsLoadInfo = GetEarlyModsLoadInfo();
 
     std::unordered_map<std::string, std::string> failedMods;
     for(std::pair<std::string, std::optional<std::string>> modPair : modsLoadInfo) {
@@ -64,21 +65,30 @@ MAKE_HOOK_MATCH(MainMenuViewController_DidActivate, &MainMenuViewController::Did
             failedMods[modPair.first] = *modPair.second;
         }
     }
+    std::unordered_map<std::string, std::string> failedEarlyMods;
+    for(std::pair<std::string, std::optional<std::string>> modPair : earlyModsLoadInfo) {
+        if(modPair.second.has_value()) {
+            failedEarlyMods[modPair.first] = *modPair.second;
+        }
+    }
 
     getLogger().info("%lu mods failed to load", failedMods.size());
-    if(failedMods.empty()) {
+
+    getLogger().info("%lu early mods failed to load", failedEarlyMods.size());
+
+    if(failedMods.empty() && failedEarlyMods.empty()) {
         getLogger().info("All mods loaded successfully, not showing fail dialog");
-        return;
     }
 
     getLogger().info("Constructing fail dialog . . .");
 
-    HMUI::ModalView* modalView = BeatSaberUI::CreateModal(self->get_transform(), UnityEngine::Vector2(70.0f, 70.0f), [](HMUI::ModalView* modalView){
+    BSML::ModalView* modalView = Lite::CreateModal(self->get_transform(), UnityEngine::Vector2(70.0f, 70.0f), nullptr);
+    modalView->onHide = [modalView]() {
         getLogger().info("Fail dialog closed, destroying modal view!");
         UnityEngine::GameObject::Destroy(modalView->get_gameObject());
-    });
+    };
     UnityEngine::Transform* modalTransform = modalView->get_transform();
-    VerticalLayoutGroup* layout = BeatSaberUI::CreateVerticalLayoutGroup(modalTransform);
+    VerticalLayoutGroup* layout = Lite::CreateVerticalLayoutGroup(modalTransform);
     UnityEngine::RectTransform* layoutTransform = layout->get_rectTransform();
 
     layout->set_padding(UnityEngine::RectOffset::New_ctor(2, 2, 4, 4));
@@ -88,31 +98,51 @@ MAKE_HOOK_MATCH(MainMenuViewController_DidActivate, &MainMenuViewController::Did
     layout->set_childControlWidth(false);
     layout->set_childForceExpandWidth(true);
 
-    std::string failedModsText;
+    std::string failedModsText, failedEarlyModsText;
     // Make sure to adjust for the plural!
     if(failedMods.size() > 1) {
         failedModsText = string_format("%lu mods failed to load!", failedMods.size());
     }   else    {
         failedModsText = string_format("%lu mod failed to load!", failedMods.size());
     }
+    if(failedEarlyMods.size() > 1) {
+        failedEarlyModsText = string_format("%lu early mods failed to load!", failedEarlyMods.size());
+    }   else    {
+        failedEarlyModsText = string_format("%lu early mod failed to load!", failedEarlyMods.size());
+    }
 
-    TextMeshProUGUI* titleText = BeatSaberUI::CreateText(layoutTransform, failedModsText);
-    titleText->set_fontSize(5.0f);
-    titleText->set_alignment(TextAlignmentOptions::TopLeft);
+    TextMeshProUGUI* modsTitleText = Lite::CreateText(layoutTransform, failedModsText);
+    modsTitleText->set_fontSize(5.0f);
+    modsTitleText->set_alignment(TextAlignmentOptions::TopLeft);
 
-    BeatSaberUI::CreateText(layoutTransform, "_______________________________");
+    Lite::CreateText(layoutTransform, "_______________________________");
 
     // Add the failed mods to the GUI
     for(std::pair<std::string, std::string> failedMod : failedMods) {
-        TextMeshProUGUI* modText = BeatSaberUI::CreateText(layoutTransform, string_format("<color=red>%s</color> didn't load because: \n%s", failedMod.first.c_str(), failedMod.second.c_str()));
+        TextMeshProUGUI* modText = Lite::CreateText(layoutTransform, string_format("<color=red>%s</color> didn't load because: \n%s", failedMod.first.c_str(), failedMod.second.c_str()));
         modText->set_overflowMode(TextOverflowModes::Ellipsis);
         modText->set_fontSize(3.5f);
 
-        BeatSaberUI::AddHoverHint(modText->get_gameObject(), failedMod.second); // Show the full fail reason in a hover hint, since there most likely won't be enough space in the modal view
+        Lite::AddHoverHint(modText->get_gameObject(), failedMod.second); // Show the full fail reason in a hover hint, since there most likely won't be enough space in the modal view
+    }
+
+    TextMeshProUGUI* earlyModsTitleText = Lite::CreateText(layoutTransform, failedEarlyModsText);
+    earlyModsTitleText->set_fontSize(5.0f);
+    earlyModsTitleText->set_alignment(TextAlignmentOptions::TopLeft);
+
+    Lite::CreateText(layoutTransform, "_______________________________");
+
+    // Add the failed mods to the GUI
+    for(std::pair<std::string, std::string> failedMod : failedEarlyMods) {
+        TextMeshProUGUI* modText = Lite::CreateText(layoutTransform, string_format("<color=red>%s</color> didn't load because: \n%s", failedMod.first.c_str(), failedMod.second.c_str()));
+        modText->set_overflowMode(TextOverflowModes::Ellipsis);
+        modText->set_fontSize(3.5f);
+
+        Lite::AddHoverHint(modText->get_gameObject(), failedMod.second); // Show the full fail reason in a hover hint, since there most likely won't be enough space in the modal view
     }
 
     getLogger().info("Showing fail dialog . . .");
-    modalView->Show(true, false, nullptr);
+    modalView->Show();
 }
 
 void ConstructConfig() {
@@ -125,10 +155,8 @@ void ConstructConfig() {
 }
 
 // Called at the early stages of game loading
-extern "C" void setup(ModInfo& info) {
-    info.id = MOD_ID;
-    info.version = VERSION;
-    modInfo = info;
+MODLIST_EXPORT void setup(CModInfo* info) {
+    *info = modInfo.to_c();
 	
     getConfig().Load(); // Load the config file
     ConstructConfig(); // Add properties to the config if missing
@@ -137,14 +165,14 @@ extern "C" void setup(ModInfo& info) {
 }
 
 // Called later on in the game loading - a good time to install function hooks
-extern "C" void load() {
+MODLIST_EXPORT void late_load() {
     il2cpp_functions::Init();
 
     // Register our mod settings menu
-    QuestUI::Init();
+    BSML::Init();
     custom_types::Register::AutoRegister();
-    QuestUI::Register::RegisterMainMenuModSettingsViewController<ModListViewController*>(modInfo, "Loaded Mods");
-    QuestUI::Register::RegisterModSettingsViewController<SettingsViewController*>(modInfo, "Mod List Settings");
+    BSML::Register::RegisterMainMenu<ModListViewController*>("Loaded Mods", "Loaded Mods", "View Loaded Mods");
+    BSML::Register::RegisterSettingsMenu<SettingsViewController*>("Mod List Settings");
 
     getLogger().info("Installing hooks...");
     INSTALL_HOOK(getLogger(), MainMenuViewController_DidActivate);

@@ -5,61 +5,68 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-std::optional<std::string> AttemptLoadLibrary(const std::string& path) {
-    dlerror(); // Clear any preexisting errors
-    dlopen(path.c_str(), RTLD_LOCAL | RTLD_NOW); // Attempt to open the SO file
-
-    // Return an error if there was one
-    char* error = dlerror();
-    return error ? std::optional(std::string(error)) : std::nullopt;
-}
-
-std::unordered_map<std::string, std::optional<std::string>> AttemptLoadLibraries(const std::string& path) {
+std::unordered_map<std::string, std::optional<std::string>> GetLoadedLibraries(const std::string& path) {
     getLogger().info("Checking for libraries in path: %s", path.c_str());
     std::unordered_map<std::string, std::optional<std::string>> result;
 
-    std::string modloaderDestinationPath = Modloader::getDestinationPath();
+    CLoadResults modsLoad = modloader_get_all();
 
-    struct dirent* dp;
-    DIR* dir = opendir(path.c_str());
-    while ((dp = readdir(dir)) != nullptr) { // Loop through all files until we run out
-        // Find all of the files that end in .so
-        if (strlen(dp->d_name) > 3 && !strcmp(dp->d_name + strlen(dp->d_name) - 3, ".so")) {        
-            getLogger().debug("Checking library %s", dp->d_name);
+    for(int i = 0; i < modsLoad.size; i++) {
+        CLoadResult& loadResult = modsLoad.array[i];
 
-            // Make sure to use the modloader's temporary directory with the correct application ID
-            std::string libraryPath = modloaderDestinationPath + dp->d_name;
-            std::optional<std::string> failReason = AttemptLoadLibrary(libraryPath);
-
-            // Add the load info to the map
-            result[dp->d_name] = failReason;
+        switch(loadResult.result) {
+            case CLoadResultEnum::LoadResult_Failed: {
+                std::filesystem::path libraryFile(loadResult.failed.path);
+                if(libraryFile.string().starts_with(path)) {
+                    result[libraryFile.filename().string()] = loadResult.failed.failure;
+                }
+                break;
+            }
+            case CLoadResultEnum::MatchType_Loaded: {
+                std::filesystem::path libraryFile(loadResult.loaded.path);
+                if(libraryFile.string().starts_with(path)) {
+                    result[libraryFile.filename().string()] = std::nullopt;
+                }
+                break;
+            }
+            default: {}
         }
     }
-    closedir(dir); // Make sure to close the directory afterwards
 
     return result;
 }
 
 static std::optional<LibraryLoadInfo> failedLibraries;
 static std::optional<LibraryLoadInfo> failedMods;
+static std::optional<LibraryLoadInfo> failedEarlyMods;
 
 LibraryLoadInfo& GetModloaderLibsLoadInfo() {
-    static std::string libsPath = string_format("sdcard/Android/data/%s/files/libs", Modloader::getApplicationId().c_str());
+    static std::string libsPath = string_format("%s/libs", modloader_get_files_dir());
     
     if(!failedLibraries.has_value()) {
-        failedLibraries = AttemptLoadLibraries(libsPath);
+        failedLibraries = GetLoadedLibraries(libsPath);
     }
 
     return *failedLibraries;
 }
 
 LibraryLoadInfo& GetModsLoadInfo() {
-    static std::string modsPath = string_format("sdcard/Android/data/%s/files/mods", Modloader::getApplicationId().c_str());
+    static std::string modsPath = string_format("%s/mods", modloader_get_files_dir());
     
     if(!failedMods.has_value()) {
-        failedMods.emplace(AttemptLoadLibraries(modsPath));
+        failedMods.emplace(GetLoadedLibraries(modsPath));
     }
 
     return *failedMods;
+}
+
+LibraryLoadInfo& GetEarlyModsLoadInfo() {
+    static std::string earlyModsPath = string_format("%s/early_mods", modloader_get_files_dir());
+    
+    if(!failedEarlyMods.has_value()) {
+        failedEarlyMods.emplace(GetLoadedLibraries(earlyModsPath));
+    }
+
+    return *failedEarlyMods;
 }
 

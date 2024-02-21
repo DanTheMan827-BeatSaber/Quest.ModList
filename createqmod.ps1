@@ -1,104 +1,78 @@
 Param(
-    [String]$qmodname="",
     [Parameter(Mandatory=$false)]
-    [Switch]$clean
+    [String] $qmodName="",
+
+    [Parameter(Mandatory=$false)]
+    [Switch] $help
 )
 
-if ($qmodName -eq "")
-{
-    echo "Give a proper qmod name and try again"
+if ($help -eq $true) {
+    Write-Output "`"createqmod`" - Creates a .qmod file with your compiled libraries and mod.json."
+    Write-Output "`n-- Arguments --`n"
+
+    Write-Output "-QmodName `t The file name of your qmod"
+
     exit
 }
+
 $mod = "./mod.json"
+
+& $PSScriptRoot/validate-modjson.ps1
+if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
+}
 $modJson = Get-Content $mod -Raw | ConvertFrom-Json
+
+if ($qmodName -eq "") {
+    $qmodName = $modJson.name
+}
 
 $filelist = @($mod)
 
 $cover = "./" + $modJson.coverImage
-$fileList = @($mod)
-
-if ((-not ($cover -eq "./")) -and (Test-Path $cover))
-{
-    $fileList += ,$cover
+if ((-not ($cover -eq "./")) -and (Test-Path $cover)) {
+    $filelist += ,$cover
 }
 
-foreach ($mod in $modJson.modFiles)
-{
+foreach ($mod in $modJson.modFiles) {
     $path = "./build/" + $mod
-    if (-not (Test-Path $path))
-    {
+    if (-not (Test-Path $path)) {
         $path = "./extern/libs/" + $mod
+    }
+    if (-not (Test-Path $path)) {
+        Write-Output "Error: could not find dependency: $path"
+        exit 1
     }
     $filelist += $path
 }
 
-foreach ($lib in $modJson.libraryFiles)
-{
+foreach ($mod in $modJson.lateModFiles) {
+    $path = "./build/" + $mod
+    if (-not (Test-Path $path)) {
+        $path = "./extern/libs/" + $mod
+    }
+    if (-not (Test-Path $path)) {
+        Write-Output "Error: could not find dependency: $path"
+        exit 1
+    }
+    $filelist += $path
+}
+
+
+foreach ($lib in $modJson.libraryFiles) {
     $path = "./build/" + $lib
-    if (-not (Test-Path $path))
-    {
-        $path = "./extern/libs/" + $mod
+    if (-not (Test-Path $path)) {
+        $path = "./extern/libs/" + $lib
+    }
+    if (-not (Test-Path $path)) {
+        Write-Output "Error: could not find dependency: $path"
+        exit 1
     }
     $filelist += $path
-}
-
-if (Test-Path "./ExtraFiles")
-{
-    $extraFiles = @()
-    $extraEntries = Get-ChildItem ./ExtraFiles/* -Recurse
-
-    foreach ($entry in $extraEntries)
-    {
-        $mode = $entry | Select -Expand Mode
-        if ($mode.Contains("d"))
-        {
-            continue
-        }
-
-        # if not a dir
-        if (-not $entry.Directory.Name.Contains("ExtraFiles"))
-        {
-            $dir = $entry.Directory
-            $folderPath = $dir.Name + "/" + $entry.Name
-            while (($dir.Directory) -and (-not $dir.Directory.Name.Contains("ExtraFiles")))
-            {
-                $folderPath = $dir.Directory.Name + "/" + $folderPath
-            }
-
-            if ($folderPath.Contains("Icons")) 
-            {
-                continue;
-            }
-            $extraFiles += ,$folderPath
-        }
-        else
-        {
-            $extraFiles += ,$entry.Name
-        }
-    }
-
-    foreach ($file in $extraFiles)
-    {
-        $path = "./ExtraFiles/" + $file
-        $filelist += ,$path
-    } 
-}
-else
-{
-    echo "No ExtraFiles Directory Found"
 }
 
 $zip = $qmodName + ".zip"
 $qmod = $qmodName + ".qmod"
-
-if ($clean.IsPresent) {
-    echo "Making Clean Qmod"
-}
-
-if ((-not ($clean.IsPresent)) -and (Test-Path $qmod))
-{
-    Move-Item $qmod $zip -Force
-}
 
 Compress-Archive -Path $filelist -DestinationPath $zip -Update
 Move-Item $zip $qmod -Force
