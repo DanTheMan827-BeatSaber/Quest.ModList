@@ -78,11 +78,12 @@ MAKE_HOOK_MATCH(MainMenuViewController_DidActivate, &MainMenuViewController::Did
 
     if(failedMods.empty() && failedEarlyMods.empty()) {
         getLogger().info("All mods loaded successfully, not showing fail dialog");
+        return;
     }
 
     getLogger().info("Constructing fail dialog . . .");
 
-    BSML::ModalView* modalView = Lite::CreateModal(self->get_transform(), UnityEngine::Vector2(70.0f, 70.0f), nullptr);
+    BSML::ModalView* modalView = Lite::CreateModal(self->get_transform(), {}, UnityEngine::Vector2(70.0f, 70.0f), nullptr);
     modalView->onHide = [modalView]() {
         getLogger().info("Fail dialog closed, destroying modal view!");
         UnityEngine::GameObject::Destroy(modalView->get_gameObject());
