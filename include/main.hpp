@@ -11,9 +11,10 @@
 #include "beatsaber-hook/shared/config/config-utils.hpp"
 #include "beatsaber-hook/shared/utils/il2cpp-functions.hpp"
 #include "beatsaber-hook/shared/utils/hooking.hpp"
+#include "fmt/format.h"
 
 // Define these functions here so that we can easily read configuration and log information from other files
 Configuration& getConfig();
-Logger& getLogger();
+static constexpr auto Logger = Paper::ConstLoggerContext(MOD_ID);
 
 #define MODLIST_EXPORT extern "C" __attribute__((visibility("default")))

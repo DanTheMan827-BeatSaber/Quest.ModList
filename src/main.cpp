@@ -34,28 +34,22 @@ Configuration& getConfig() {
     return config;
 }
 
-// Returns a logger, useful for printing debug messages
-Logger& getLogger() {
-    static auto* logger = new Logger(modInfo);
-    return *logger;
-}
-
 // Displays a modal view if mods fail to load showing why
 MAKE_HOOK_MATCH(MainMenuViewController_DidActivate, &MainMenuViewController::DidActivate, void, MainMenuViewController* self, bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
     MainMenuViewController_DidActivate(self, firstActivation, addedToHierarchy, screenSystemEnabling);
 
-    getLogger().info("MainMenuViewController_DidActivate");
+    Logger.info("MainMenuViewController_DidActivate");
     if(!firstActivation) {
-        getLogger().info("Not first activation, not displaying modal");
+        Logger.info("Not first activation, not displaying modal");
         return;
     }
 
     if(!getConfig().config["showFailedModsOnGameStart"].GetBool()) {
-        getLogger().info("Showing failed mods on game start is disabled! Returning");
+        Logger.info("Showing failed mods on game start is disabled! Returning");
         return;
     }
 
-    getLogger().info("Checking for failed mods . . .");
+    Logger.info("Checking for failed mods . . .");
     LibraryLoadInfo& modsLoadInfo = GetModsLoadInfo();
     LibraryLoadInfo& earlyModsLoadInfo = GetEarlyModsLoadInfo();
 
@@ -72,20 +66,20 @@ MAKE_HOOK_MATCH(MainMenuViewController_DidActivate, &MainMenuViewController::Did
         }
     }
 
-    getLogger().info("%lu mods failed to load", failedMods.size());
+    Logger.info("%lu mods failed to load", failedMods.size());
 
-    getLogger().info("%lu early mods failed to load", failedEarlyMods.size());
+    Logger.info("%lu early mods failed to load", failedEarlyMods.size());
 
     if(failedMods.empty() && failedEarlyMods.empty()) {
-        getLogger().info("All mods loaded successfully, not showing fail dialog");
+        Logger.info("All mods loaded successfully, not showing fail dialog");
         return;
     }
 
-    getLogger().info("Constructing fail dialog . . .");
+    Logger.info("Constructing fail dialog . . .");
 
     BSML::ModalView* modalView = Lite::CreateModal(self->get_transform(), {}, UnityEngine::Vector2(70.0f, 70.0f), nullptr);
     modalView->onHide = [modalView]() {
-        getLogger().info("Fail dialog closed, destroying modal view!");
+        Logger.info("Fail dialog closed, destroying modal view!");
         UnityEngine::GameObject::Destroy(modalView->get_gameObject());
     };
     UnityEngine::Transform* modalTransform = modalView->get_transform();
@@ -102,14 +96,14 @@ MAKE_HOOK_MATCH(MainMenuViewController_DidActivate, &MainMenuViewController::Did
     std::string failedModsText, failedEarlyModsText;
     // Make sure to adjust for the plural!
     if(failedMods.size() > 1) {
-        failedModsText = string_format("%lu mods failed to load!", failedMods.size());
+        failedModsText = fmt::format("{} mods failed to load!", failedMods.size());
     }   else    {
-        failedModsText = string_format("%lu mod failed to load!", failedMods.size());
+        failedModsText = fmt::format("{} mod failed to load!", failedMods.size());
     }
     if(failedEarlyMods.size() > 1) {
-        failedEarlyModsText = string_format("%lu early mods failed to load!", failedEarlyMods.size());
+        failedEarlyModsText = fmt::format("{} early mods failed to load!", failedEarlyMods.size());
     }   else    {
-        failedEarlyModsText = string_format("%lu early mod failed to load!", failedEarlyMods.size());
+        failedEarlyModsText = fmt::format("{} early mod failed to load!", failedEarlyMods.size());
     }
 
     if(failedMods.size() > 0) {
@@ -121,7 +115,7 @@ MAKE_HOOK_MATCH(MainMenuViewController_DidActivate, &MainMenuViewController::Did
 
         // Add the failed mods to the GUI
         for(std::pair<std::string, std::string> failedMod : failedMods) {
-            TextMeshProUGUI* modText = Lite::CreateText(layoutTransform, string_format("<color=red>%s</color> didn't load because: \n%s", failedMod.first.c_str(), failedMod.second.c_str()));
+            TextMeshProUGUI* modText = Lite::CreateText(layoutTransform, fmt::format("<color=red>{}</color> didn't load because: \n{}", failedMod.first.c_str(), failedMod.second.c_str()));
             modText->set_overflowMode(TextOverflowModes::Ellipsis);
             modText->set_fontSize(3.5f);
 
@@ -138,7 +132,7 @@ MAKE_HOOK_MATCH(MainMenuViewController_DidActivate, &MainMenuViewController::Did
 
         // Add the failed mods to the GUI
         for(std::pair<std::string, std::string> failedMod : failedEarlyMods) {
-            TextMeshProUGUI* modText = Lite::CreateText(layoutTransform, string_format("<color=red>%s</color> didn't load because: \n%s", failedMod.first.c_str(), failedMod.second.c_str()));
+            TextMeshProUGUI* modText = Lite::CreateText(layoutTransform, fmt::format("<color=red>{}</color> didn't load because: \n{}", failedMod.first.c_str(), failedMod.second.c_str()));
             modText->set_overflowMode(TextOverflowModes::Ellipsis);
             modText->set_fontSize(3.5f);
 
@@ -146,7 +140,7 @@ MAKE_HOOK_MATCH(MainMenuViewController_DidActivate, &MainMenuViewController::Did
         }
     }
 
-    getLogger().info("Showing fail dialog . . .");
+    Logger.info("Showing fail dialog . . .");
     modalView->Show();
 }
 
@@ -162,11 +156,11 @@ void ConstructConfig() {
 // Called at the early stages of game loading
 MODLIST_EXPORT void setup(CModInfo* info) {
     *info = modInfo.to_c();
-	
+
     getConfig().Load(); // Load the config file
     ConstructConfig(); // Add properties to the config if missing
 
-    getLogger().info("Completed setup!");
+    Logger.info("Completed setup!");
 }
 
 // Called later on in the game loading - a good time to install function hooks
@@ -179,7 +173,7 @@ MODLIST_EXPORT void late_load() {
     BSML::Register::RegisterMainMenu<ModListViewController*>("Loaded Mods", "Loaded Mods", "View Loaded Mods");
     BSML::Register::RegisterSettingsMenu<SettingsViewController*>("Mod List Settings");
 
-    getLogger().info("Installing hooks...");
-    INSTALL_HOOK(getLogger(), MainMenuViewController_DidActivate);
-    getLogger().info("Installed all hooks!");
+    Logger.info("Installing hooks...");
+    INSTALL_HOOK(Logger, MainMenuViewController_DidActivate);
+    Logger.info("Installed all hooks!");
 }
