@@ -113,7 +113,11 @@ void ModListViewController::DidActivate(bool firstActivation, bool addedToHierar
 
         PaperLogger.info("Adding mod %s", mod.info.id);
         ListItem item;
-        item.content = fmt::format("<color=green>{}</color><color=white> v{}", mod.info.id, mod.info.version);
+        std::string id = mod.info.id;
+        if(id.find("/") != std::string::npos) {
+            id = id.substr(id.find_last_of("/") + 1);
+        }
+        item.content = fmt::format("<color=green>{}</color><color=white> v{}", id, mod.info.version);
         loadedMods.push_back(item);
     }
 
@@ -129,7 +133,11 @@ void ModListViewController::DidActivate(bool firstActivation, bool addedToHierar
 
         PaperLogger.info("Adding mod %s", mod.info.id);
         ListItem item;
-        item.content = fmt::format("<color=green>{}</color><color=white> v{}", mod.info.id, mod.info.version);
+        std::string id = mod.info.id;
+        if(id.find("/") != std::string::npos) {
+            id = id.substr(id.find_last_of("/") + 1);
+        }
+        item.content = fmt::format("<color=green>{}</color><color=white> v{}", id, mod.info.version);
         loadedEarlyMods.push_back(item);
     }
 
