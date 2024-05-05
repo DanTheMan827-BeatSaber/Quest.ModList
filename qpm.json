@@ -17,34 +17,33 @@
   "dependencies": [
     {
       "id": "beatsaber-hook",
-      "versionRange": "^5.0.0",
-      "additionalData": {
-        "extraFiles": [
-          "src/inline-hook"
-        ]
-      }
-    },
-    {
-      "id": "bs-cordl",
-      "versionRange": "^3402.1.2",
-      "additionalData": {}
-    },
-    {
-      "id": "custom-types",
-      "versionRange": "^0.16.18",
+      "versionRange": "^5.1.6",
       "additionalData": {}
     },
     {
       "id": "bsml",
-      "versionRange": "^0.4.9",
+      "versionRange": "^0.4.30",
+      "additionalData": {}
+    },
+    {
+      "id": "bs-cordl",
+      "versionRange": "^3500.0.0",
       "additionalData": {}
     },
     {
       "id": "scotland2",
       "versionRange": "^0.1.4",
-      "additionalData": {
-        "includeQmod": false
-      }
+      "additionalData": {}
+    },
+    {
+      "id": "custom-types",
+      "versionRange": "^0.17.7",
+      "additionalData": {}
+    },
+    {
+      "id": "paper",
+      "versionRange": "^3.6.3",
+      "additionalData": {}
     }
   ]
 }

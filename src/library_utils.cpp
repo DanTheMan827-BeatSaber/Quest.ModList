@@ -6,7 +6,7 @@
 #include <dirent.h>
 
 std::unordered_map<std::string, std::optional<std::string>> GetLoadedLibraries(const std::string& path) {
-    getLogger().info("Checking for libraries in path: %s", path.c_str());
+    PaperLogger.info("Checking for libraries in path: %s", path.c_str());
     std::unordered_map<std::string, std::optional<std::string>> result;
 
     CLoadResults modsLoad = modloader_get_all();
@@ -41,7 +41,7 @@ static std::optional<LibraryLoadInfo> failedMods;
 static std::optional<LibraryLoadInfo> failedEarlyMods;
 
 LibraryLoadInfo& GetModloaderLibsLoadInfo() {
-    static std::string libsPath = string_format("%s/libs", modloader_get_files_dir());
+    static std::string libsPath = fmt::format("{}/libs", modloader_get_files_dir());
     
     if(!failedLibraries.has_value()) {
         failedLibraries = GetLoadedLibraries(libsPath);
@@ -51,7 +51,7 @@ LibraryLoadInfo& GetModloaderLibsLoadInfo() {
 }
 
 LibraryLoadInfo& GetModsLoadInfo() {
-    static std::string modsPath = string_format("%s/mods", modloader_get_files_dir());
+    static std::string modsPath = fmt::format("{}/mods", modloader_get_files_dir());
     
     if(!failedMods.has_value()) {
         failedMods.emplace(GetLoadedLibraries(modsPath));
@@ -61,7 +61,7 @@ LibraryLoadInfo& GetModsLoadInfo() {
 }
 
 LibraryLoadInfo& GetEarlyModsLoadInfo() {
-    static std::string earlyModsPath = string_format("%s/early_mods", modloader_get_files_dir());
+    static std::string earlyModsPath = fmt::format("{}/early_mods", modloader_get_files_dir());
     
     if(!failedEarlyMods.has_value()) {
         failedEarlyMods.emplace(GetLoadedLibraries(earlyModsPath));
