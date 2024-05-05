@@ -1,4 +1,3 @@
-#!/usr/local/bin/pwsh
 Param(
     [Parameter(Mandatory=$false)]
     [Switch]$clean,

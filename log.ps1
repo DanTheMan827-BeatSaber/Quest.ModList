@@ -1,4 +1,3 @@
-#!/usr/local/bin/pwsh
 if (Test-Path ./log.log)
 {
     & del log.log
