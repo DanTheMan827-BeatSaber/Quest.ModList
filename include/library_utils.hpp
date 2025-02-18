@@ -2,26 +2,43 @@
 
 #include <optional>
 #include <string>
-#include <vector>
 #include <unordered_map>
-#include "scotland2/shared/modloader.h"
 
 using LibraryLoadInfo = std::unordered_map<std::string, std::optional<std::string>>;
 
-// Loops over all the SO files in the folder path, and attempts to load them
-// Keys are library file names (with .so included), values are fail reasons, or nullopt if loading succeeded
-LibraryLoadInfo GetLoadedLibraries(const std::string& path);
+/**
+ * @brief Loads shared library files (.so) from the specified directory.
+ *
+ * Iterates over the folder and attempts to load each library.
+ *
+ * @param path The directory path containing the libraries.
+ * @return LibraryLoadInfo Mapping of library filenames to optional failure reasons (nullopt on success).
+ */
+LibraryLoadInfo GetLoadedLibraries(std::string const& path);
 
-
-// Gets (or finds) the libraries that failed to load in this instance of the game running
-// Keys are library file names (with .so included), values are fail reasons (or nullopt if loading was successful)
+/**
+ * @brief Gets the load information for modloader libraries.
+ *
+ * Provides access to the load statuses of modloader libraries.
+ *
+ * @return LibraryLoadInfo& Mapping of library filenames to optional failure reasons.
+ */
 LibraryLoadInfo& GetModloaderLibsLoadInfo();
 
-
-// Gets the mods that failed to load in this instance of the game running
-// Keys are mod SO file names (with .so included), values are fail reasons (or nullopt if loading was successful)
+/**
+ * @brief Gets the load information for mods.
+ *
+ * Provides access to the load statuses of mods.
+ *
+ * @return LibraryLoadInfo& Mapping of mod filenames to optional failure reasons.
+ */
 LibraryLoadInfo& GetModsLoadInfo();
 
-// Gets the early mods that failed to load in this instance of the game running
-// Keys are early mod SO file names (with .so included), values are fail reasons (or nullopt if loading was successful)
+/**
+ * @brief Gets the load information for early mods.
+ *
+ * Provides access to the load statuses of early mods.
+ *
+ * @return LibraryLoadInfo& Mapping of early mod filenames to optional failure reasons.
+ */
 LibraryLoadInfo& GetEarlyModsLoadInfo();

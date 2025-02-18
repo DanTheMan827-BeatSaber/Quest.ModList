@@ -2,16 +2,14 @@
   "configurations": [
     {
       "defines": [
-        "MOD_ID=mod-list",
-        "VERSION=\"0.1.4\"",
+        "MOD_ID=\"mod-list\"",
+        "VERSION=\"0.1.0\"",
         "__GNUC__",
         "__aarch64__"
       ],
       "includePath": [
         "${workspaceFolder}/extern/includes/libil2cpp/il2cpp/libil2cpp",
-        "${workspaceFolder}/extern/includes/questui/shared/cppcodec",
         "${workspaceFolder}/extern/includes/codegen/include",
-        "${workspaceFolder}/extern/includes/fmt/fmt/include",
         "${workspaceFolder}/extern/includes",
         "${workspaceFolder}/include",
         "${workspaceFolder}/shared",
@@ -21,7 +19,8 @@
       "name": "Quest",
       "cStandard": "c11",
       "cppStandard": "c++20",
-      "intelliSenseMode": "linux-clang-x64"
+      "intelliSenseMode": "clang-x64",
+      "compileCommands": "${workspaceFolder}/build/compile_commands.json"
     }
   ],
   "version": 4

@@ -1,22 +1,8 @@
 #pragma once
-#include <string>
-#include <optional>
 
-// Include the modloader header, which allows us to tell the modloader which mod this is, and the version etc.
-#include "scotland2/shared/modloader.h"
-
-// beatsaber-hook is a modding framework that lets us call functions and fetch field values from in the game
-// It also allows creating objects, configuration, and importantly, hooking methods to modify their values
-#include "beatsaber-hook/shared/utils/logging.hpp"
-#include "beatsaber-hook/shared/config/config-utils.hpp"
-#include "beatsaber-hook/shared/utils/il2cpp-functions.hpp"
-#include "beatsaber-hook/shared/utils/hooking.hpp"
-
-#include "paper/shared/logger.hpp"
-
-constexpr auto PaperLogger = Paper::ConstLoggerContext("test");
-
-// Define these functions here so that we can easily read configuration and log information from other files
-Configuration& getConfig();
-
-#define MODLIST_EXPORT extern "C" __attribute__((visibility("default")))
+#define MOD_EXPORT __attribute__((visibility("default")))
+#ifdef __cplusplus
+#define MOD_EXPORT_FUNC extern "C" MOD_EXPORT
+#else
+#define MOD_EXPORT_FUNC MOD_EXPORT
+#endif
