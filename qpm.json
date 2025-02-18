@@ -1,49 +1,125 @@
 {
-  "version": "0.1.0",
+  "$schema": "https://raw.githubusercontent.com/QuestPackageManager/QPM.Package/refs/heads/main/qpm.schema.json",
+  "version": "0.4.0",
   "sharedDir": "shared",
   "dependenciesDir": "extern",
   "info": {
     "name": "ModList",
     "id": "mod-list",
-    "version": "0.1.5",
+    "version": "0.1.10",
     "url": null,
     "additionalData": {
-      "overrideSoName": "libmod-list.so"
+      "overrideSoName": "libmod-list.so",
+      "cmake": true
     }
   },
   "workspace": {
-    "scripts": {}
+    "scripts": {
+      "build": [
+        "pwsh ./scripts/build.ps1"
+      ],
+      "clean": [
+        "pwsh ./scripts/build.ps1 -clean"
+      ],
+      "clean-qmod": [
+        "qpm s clean",
+        "qpm s qmod"
+      ],
+      "copy": [
+        "pwsh ./scripts/copy.ps1 $0:?"
+      ],
+      "deepclean": [
+        "pwsh ./scripts/build.ps1 -clean -skipBuild",
+        "qpm clear"
+      ],
+      "logcat": [
+        "pwsh ./scripts/start-logging.ps1"
+      ],
+      "make-hooking": [
+        "pwsh ./common-stuff/scripts/make-hooking.ps1"
+      ],
+      "qmod": [
+        "qpm s build",
+        "qpm s update-version",
+        "qpm qmod zip --skip_build",
+        "qpm s update-version -- -restore"
+      ],
+      "rebuild": [
+        "qpm s deepclean",
+        "qpm s build"
+      ],
+      "rebuild-qmod": [
+        "qpm s deepclean",
+        "qpm s qmod"
+      ],
+      "restart": [
+        "pwsh ./scripts/restart-game.ps1"
+      ],
+      "stack": [
+        "pwsh ./scripts/ndk-stack.ps1"
+      ],
+      "tomb": [
+        "pwsh ./scripts/pull-tombstone.ps1"
+      ],
+      "update-version": [
+        "pwsh ./scripts/update-version.ps1 $0:?"
+      ]
+    },
+    "ndk": "^27.2.12479018",
+    "qmodIncludeDirs": [
+      "./build",
+      "./extern/libs"
+    ],
+    "qmodIncludeFiles": [],
+    "qmodOutput": "./ModList.qmod"
   },
   "dependencies": [
     {
-      "id": "beatsaber-hook",
-      "versionRange": "^5.1.6",
+      "id": "autohooks",
+      "versionRange": "^0.1.0",
       "additionalData": {}
     },
     {
-      "id": "bsml",
-      "versionRange": "^0.4.30",
+      "id": "beatsaber-hook",
+      "versionRange": "^6.4.0",
       "additionalData": {}
     },
     {
       "id": "bs-cordl",
-      "versionRange": "^3500.0.0",
+      "versionRange": "4020.*",
       "additionalData": {}
     },
     {
-      "id": "scotland2",
-      "versionRange": "^0.1.4",
+      "id": "bsml",
+      "versionRange": "^0.4.49",
+      "additionalData": {}
+    },
+    {
+      "id": "config-utils",
+      "versionRange": "^2.0.2",
       "additionalData": {}
     },
     {
       "id": "custom-types",
-      "versionRange": "^0.17.7",
+      "versionRange": "^0.18.2",
       "additionalData": {}
     },
     {
-      "id": "paper",
-      "versionRange": "^3.6.3",
+      "id": "mmkay",
+      "versionRange": "^0.1.1",
       "additionalData": {}
+    },
+    {
+      "id": "paper2_scotland2",
+      "versionRange": "^4.5.0",
+      "additionalData": {}
+    },
+    {
+      "id": "scotland2",
+      "versionRange": "^0.1.6",
+      "additionalData": {
+        "includeQmod": false
+      }
     }
   ]
 }

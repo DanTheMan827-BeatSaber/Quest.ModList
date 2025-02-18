@@ -1,25 +1,32 @@
-
 #include "ModListViewController.hpp"
-#include "main.hpp"
+
 #include "library_utils.hpp"
+#include "logger.hpp"
+#include "main.hpp"
 using namespace ModList;
 
-#include "UnityEngine/Transform.hpp"
-#include "UnityEngine/UI/VerticalLayoutGroup.hpp"
-#include "UnityEngine/UI/HorizontalLayoutGroup.hpp"
-#include "UnityEngine/UI/LayoutElement.hpp"
+// UnityEngine
 #include "UnityEngine/RectOffset.hpp"
 #include "UnityEngine/TextAnchor.hpp"
+#include "UnityEngine/Transform.hpp"
+using namespace UnityEngine;
+
+// UnityEngine::UI
+#include "UnityEngine/UI/HorizontalLayoutGroup.hpp"
+#include "UnityEngine/UI/LayoutElement.hpp"
+#include "UnityEngine/UI/VerticalLayoutGroup.hpp"
 using namespace UnityEngine::UI;
 
-#include "TMPro/TextAlignmentOptions.hpp"
-
+// BSML
 #include "bsml/shared/BSML-Lite.hpp"
-using namespace BSML::Lite;;
+using namespace BSML::Lite;
 
+// TMPro
+#include "TMPro/TextAlignmentOptions.hpp"
 #include "TMPro/TextMeshProUGUI.hpp"
 using namespace TMPro;
 
+// Scottland2
 #include "scotland2/shared/modloader.h"
 
 struct ListItem {
@@ -29,22 +36,25 @@ struct ListItem {
 
 DEFINE_TYPE(ModList, ModListViewController);
 
-void CreateListWithTitle(UnityEngine::Transform* parent, std::string title, const std::vector<ListItem>& content) {
+void CreateListWithTitle(TransformWrapper parent, std::string title, std::vector<ListItem> const& content) {
     VerticalLayoutGroup* layout = CreateVerticalLayoutGroup(parent);
     layout->set_spacing(0.5);
+    layout->set_childAlignment(UnityEngine::TextAnchor::UpperLeft);
+    layout->set_childForceExpandHeight(false);
+    layout->set_childControlHeight(true);
 
     // Create a layout for displaying the title.
     VerticalLayoutGroup* titleLayout = CreateVerticalLayoutGroup(layout->get_rectTransform());
     CreateText(titleLayout->get_rectTransform(), title)->set_alignment(TMPro::TextAlignmentOptions::Center);
-    CreateText(titleLayout->get_rectTransform(), "____________")->set_alignment(TMPro::TextAlignmentOptions::Center); // This is a botch, but works alright.
-    titleLayout->GetComponent<LayoutElement*>()->set_minWidth(25.0); // Make sure the list has a set width.
+    CreateText(titleLayout->get_rectTransform(), "____________")
+        ->set_alignment(TMPro::TextAlignmentOptions::Center);  // This is a botch, but works alright.
+    titleLayout->GetComponent<LayoutElement*>()->set_minWidth(25.0);  // Make sure the list has a set width.
 
     // Create a layout for the list itself
     VerticalLayoutGroup* listLayout = CreateVerticalLayoutGroup(layout->get_rectTransform());
-    listLayout->GetComponent<LayoutElement*>()->set_minWidth(25.0); // Make sure the list has a set width.
-    listLayout->GetComponent<LayoutElement*>()->set_minHeight(40.0); // Make sure the list takes up most of the space
+    listLayout->GetComponent<LayoutElement*>()->set_minWidth(25.0);  // Make sure the list has a set width.
+    listLayout->GetComponent<LayoutElement*>()->set_minHeight(40.0);  // Make sure the list takes up most of the space
 
-    
     // Add some padding so that the messages aren't totally squished
     titleLayout->set_padding(UnityEngine::RectOffset::New_ctor(1, 1, 0, 0));
     listLayout->set_padding(UnityEngine::RectOffset::New_ctor(1, 1, 1, 1));
@@ -55,10 +65,10 @@ void CreateListWithTitle(UnityEngine::Transform* parent, std::string title, cons
     listLayout->set_childControlHeight(true);
 
     // Create a line of text for each in the list
-    for(const auto& element : content) {
+    for (auto const& element : content) {
         TMPro::TextMeshProUGUI* text = CreateText(listLayout->get_rectTransform(), element.content);
         // Add a hover hint if there is one
-        if(!element.hoverHint.empty()) {
+        if (!element.hoverHint.empty()) {
             AddHoverHint(text->get_gameObject(), element.hoverHint);
         }
         text->set_fontSize(2.3f);
@@ -66,55 +76,59 @@ void CreateListWithTitle(UnityEngine::Transform* parent, std::string title, cons
 }
 
 void ModListViewController::DidActivate(bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
-    if(!(firstActivation && addedToHierarchy))  {return;}
+    if (!(firstActivation && addedToHierarchy)) {
+        return;
+    }
 
     // Allow the lists to be scrolled
     UnityEngine::GameObject* scrollView = CreateScrollableSettingsContainer(get_rectTransform());
 
+    // Create the main layout for the lists
     HorizontalLayoutGroup* mainLayout = CreateHorizontalLayoutGroup(scrollView->get_transform());
-    mainLayout->set_childAlignment(UnityEngine::TextAnchor::MiddleCenter); // The lists should be centred
+    mainLayout->set_childAlignment(UnityEngine::TextAnchor::UpperLeft);  // The lists should Left aligned
+    mainLayout->set_childForceExpandHeight(false);
+    mainLayout->set_childControlHeight(true);
 
     // Check to see which libraries loaded/failed to load
-    PaperLogger.info("Checking library load info.");
+    Logger.info("Checking library load info.");
 
     // Find the path with the correct application ID
     LibraryLoadInfo& libraryLoadInfo = GetModloaderLibsLoadInfo();
     std::vector<ListItem> librariesList;
 
-    for(std::pair<std::string, std::optional<std::string>> libraryLoadPair : libraryLoadInfo) {
-        if(libraryLoadPair.second.has_value()) {
+    for (std::pair<std::string, std::optional<std::string>> libraryLoadPair : libraryLoadInfo) {
+        if (libraryLoadPair.second.has_value()) {
             // If there was an error loading the library, display it in red
-            PaperLogger.debug("Adding failed library %s", libraryLoadPair.first.c_str());
+            Logger.debug("Adding failed library %s", libraryLoadPair.first.c_str());
             ListItem item;
             item.content = "<color=red>" + libraryLoadPair.first + " (failed)";
-            item.hoverHint = *libraryLoadPair.second; // Allow you to hover over the mod to see the fail reason
+            item.hoverHint = *libraryLoadPair.second;  // Allow you to hover over the mod to see the fail reason
             librariesList.push_back(item);
-        }   else    {
+        } else {
             // Otherwise, make the library name green
-            PaperLogger.debug("Adding successful library %s", libraryLoadPair.first.c_str());
+            Logger.debug("Adding successful library %s", libraryLoadPair.first.c_str());
             ListItem item;
             item.content = "<color=green>" + libraryLoadPair.first;
             librariesList.push_back(item);
         }
-        
     }
 
-    PaperLogger.info("Adding loaded mods . . .");
+    Logger.info("Adding loaded mods . . .");
     // Find the list of all loaded mods
     std::vector<ListItem> loadedMods;
     auto modloaderLoadedMods = modloader_get_loaded();
-    for(int i = 0; i < modloaderLoadedMods.size; i++) {
-        const CModResult& mod = modloaderLoadedMods.array[i];
-        
+    for (int i = 0; i < modloaderLoadedMods.size; i++) {
+        CModResult const& mod = modloaderLoadedMods.array[i];
+
         std::string libsPath = fmt::format("{}/mods", modloader_get_files_dir());
-        if(!std::string(mod.path).starts_with(libsPath)) {
+        if (!std::string(mod.path).starts_with(libsPath)) {
             continue;
         }
 
-        PaperLogger.info("Adding mod %s", mod.info.id);
+        Logger.info("Adding mod %s", mod.info.id);
         ListItem item;
         std::string id = mod.info.id;
-        if(id.find("/") != std::string::npos) {
+        if (id.find("/") != std::string::npos) {
             id = id.substr(id.find_last_of("/") + 1);
         }
         item.content = fmt::format("<color=green>{}</color><color=white> v{}", id, mod.info.version);
@@ -123,18 +137,18 @@ void ModListViewController::DidActivate(bool firstActivation, bool addedToHierar
 
     std::vector<ListItem> loadedEarlyMods;
     auto modloaderLoadedEarlyMods = modloader_get_loaded();
-    for(int i = 0; i < modloaderLoadedEarlyMods.size; i++) {
-        const CModResult& mod = modloaderLoadedEarlyMods.array[i];
-        
+    for (int i = 0; i < modloaderLoadedEarlyMods.size; i++) {
+        CModResult const& mod = modloaderLoadedEarlyMods.array[i];
+
         std::string libsPath = fmt::format("{}/early_mods", modloader_get_files_dir());
-        if(!std::string(mod.path).starts_with(libsPath)) {
+        if (!std::string(mod.path).starts_with(libsPath)) {
             continue;
         }
 
-        PaperLogger.info("Adding mod %s", mod.info.id);
+        Logger.info("Adding mod %s", mod.info.id);
         ListItem item;
         std::string id = mod.info.id;
-        if(id.find("/") != std::string::npos) {
+        if (id.find("/") != std::string::npos) {
             id = id.substr(id.find_last_of("/") + 1);
         }
         item.content = fmt::format("<color=green>{}</color><color=white> v{}", id, mod.info.version);
@@ -148,14 +162,14 @@ void ModListViewController::DidActivate(bool firstActivation, bool addedToHierar
     // modsLoadInfo.insert(earlyModsLoadInfo.begin(), earlyModsLoadInfo.end());
 
     std::vector<ListItem> failedMods;
-    PaperLogger.info("Checking for failed mods . . .");
-    for(std::pair<std::string, std::optional<std::string>> modLoadPair : modsLoadInfo) {
+    Logger.info("Checking for failed mods . . .");
+    for (std::pair<std::string, std::optional<std::string>> modLoadPair : modsLoadInfo) {
         // If there was an error loading the library, add it to the list in red
-        if(modLoadPair.second.has_value()) {
-            PaperLogger.debug("Adding failed mod %s", modLoadPair.first.c_str());
+        if (modLoadPair.second.has_value()) {
+            Logger.debug("Adding failed mod %s", modLoadPair.first.c_str());
             ListItem item;
             item.content = fmt::format("<color=red>{} (failed)", modLoadPair.first.c_str());
-            item.hoverHint = *modLoadPair.second; // Allow you to hover over the mod to see the fail reason
+            item.hoverHint = *modLoadPair.second;  // Allow you to hover over the mod to see the fail reason
             failedMods.push_back(item);
         }
     }
@@ -163,22 +177,22 @@ void ModListViewController::DidActivate(bool firstActivation, bool addedToHierar
     LibraryLoadInfo& earlyModsLoadInfo = GetEarlyModsLoadInfo();
 
     std::vector<ListItem> failedEarlyMods;
-    PaperLogger.info("Checking for failed mods . . .");
-    for(std::pair<std::string, std::optional<std::string>> modLoadPair : earlyModsLoadInfo) {
+    Logger.info("Checking for failed mods . . .");
+    for (std::pair<std::string, std::optional<std::string>> modLoadPair : earlyModsLoadInfo) {
         // If there was an error loading the library, add it to the list in red
-        if(modLoadPair.second.has_value()) {
-            PaperLogger.debug("Adding failed mod %s", modLoadPair.first.c_str());
+        if (modLoadPair.second.has_value()) {
+            Logger.debug("Adding failed mod %s", modLoadPair.first.c_str());
             ListItem item;
-            item.content = fmt::format("<color=red{}s (failed)", modLoadPair.first.c_str());
-            item.hoverHint = *modLoadPair.second; // Allow you to hover over the mod to see the fail reason
+            item.content = fmt::format("<color=red>{} (failed)", modLoadPair.first.c_str());
+            item.hoverHint = *modLoadPair.second;  // Allow you to hover over the mod to see the fail reason
             failedEarlyMods.push_back(item);
         }
     }
 
     // Create lists for each group
-    CreateListWithTitle(mainLayout->get_transform(), "Loaded Early Mods", loadedEarlyMods);
-    CreateListWithTitle(mainLayout->get_rectTransform(), "Loaded Mods", loadedMods);
-    CreateListWithTitle(mainLayout->get_transform(), "Failed Early Mods", failedEarlyMods);
-    CreateListWithTitle(mainLayout->get_rectTransform(), "Failed Mods", failedMods);
-    CreateListWithTitle(mainLayout->get_rectTransform(), "Libraries", librariesList);
+    CreateListWithTitle(mainLayout, "Loaded Early Mods", loadedEarlyMods);
+    CreateListWithTitle(mainLayout, "Loaded Mods", loadedMods);
+    CreateListWithTitle(mainLayout, "Failed Early Mods", failedEarlyMods);
+    CreateListWithTitle(mainLayout, "Failed Mods", failedMods);
+    CreateListWithTitle(mainLayout, "Libraries", librariesList);
 }
