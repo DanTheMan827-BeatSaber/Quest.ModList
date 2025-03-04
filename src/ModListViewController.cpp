@@ -99,14 +99,14 @@ void ModListViewController::DidActivate(bool firstActivation, bool addedToHierar
     for (std::pair<std::string, std::optional<std::string>> libraryLoadPair : libraryLoadInfo) {
         if (libraryLoadPair.second.has_value()) {
             // If there was an error loading the library, display it in red
-            Logger.debug("Adding failed library %s", libraryLoadPair.first.c_str());
+            Logger.debug("Adding failed library {}", libraryLoadPair.first.c_str());
             ListItem item;
-            item.content = "<color=red>" + libraryLoadPair.first + " (failed)";
+            item.content = "<color=red>" + libraryLoadPair.first;
             item.hoverHint = *libraryLoadPair.second;  // Allow you to hover over the mod to see the fail reason
             librariesList.push_back(item);
         } else {
             // Otherwise, make the library name green
-            Logger.debug("Adding successful library %s", libraryLoadPair.first.c_str());
+            Logger.debug("Adding successful library {}", libraryLoadPair.first.c_str());
             ListItem item;
             item.content = "<color=green>" + libraryLoadPair.first;
             librariesList.push_back(item);
@@ -125,9 +125,9 @@ void ModListViewController::DidActivate(bool firstActivation, bool addedToHierar
             continue;
         }
 
-        Logger.info("Adding mod %s", mod.info.id);
+        Logger.info("Adding mod {}", mod.info.id);
         ListItem item;
-        std::string id = mod.info.id;
+        std::string id = strlen(mod.info.id) == 0 ? mod.path : mod.info.id;
         if (id.find("/") != std::string::npos) {
             id = id.substr(id.find_last_of("/") + 1);
         }
@@ -145,9 +145,9 @@ void ModListViewController::DidActivate(bool firstActivation, bool addedToHierar
             continue;
         }
 
-        Logger.info("Adding mod %s", mod.info.id);
+        Logger.info("Adding mod {}", mod.info.id);
         ListItem item;
-        std::string id = mod.info.id;
+        std::string id = strlen(mod.info.id) == 0 ? mod.path : mod.info.id;
         if (id.find("/") != std::string::npos) {
             id = id.substr(id.find_last_of("/") + 1);
         }
@@ -166,9 +166,9 @@ void ModListViewController::DidActivate(bool firstActivation, bool addedToHierar
     for (std::pair<std::string, std::optional<std::string>> modLoadPair : modsLoadInfo) {
         // If there was an error loading the library, add it to the list in red
         if (modLoadPair.second.has_value()) {
-            Logger.debug("Adding failed mod %s", modLoadPair.first.c_str());
+            Logger.debug("Adding failed mod {}", modLoadPair.first.c_str());
             ListItem item;
-            item.content = fmt::format("<color=red>{} (failed)", modLoadPair.first.c_str());
+            item.content = fmt::format("<color=red>{}", modLoadPair.first.c_str());
             item.hoverHint = *modLoadPair.second;  // Allow you to hover over the mod to see the fail reason
             failedMods.push_back(item);
         }
@@ -181,9 +181,9 @@ void ModListViewController::DidActivate(bool firstActivation, bool addedToHierar
     for (std::pair<std::string, std::optional<std::string>> modLoadPair : earlyModsLoadInfo) {
         // If there was an error loading the library, add it to the list in red
         if (modLoadPair.second.has_value()) {
-            Logger.debug("Adding failed mod %s", modLoadPair.first.c_str());
+            Logger.debug("Adding failed mod {}", modLoadPair.first.c_str());
             ListItem item;
-            item.content = fmt::format("<color=red>{} (failed)", modLoadPair.first.c_str());
+            item.content = fmt::format("<color=red>{}", modLoadPair.first.c_str());
             item.hoverHint = *modLoadPair.second;  // Allow you to hover over the mod to see the fail reason
             failedEarlyMods.push_back(item);
         }

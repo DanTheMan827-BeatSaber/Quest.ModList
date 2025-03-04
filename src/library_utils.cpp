@@ -9,7 +9,7 @@
 #include "scotland2/shared/modloader.h"
 
 std::unordered_map<std::string, std::optional<std::string>> GetLoadedLibraries(std::string const& path) {
-    Logger.info("Checking for libraries in path: %s", path.c_str());
+    Logger.info("Checking for libraries in path: {}", path.c_str());
     std::unordered_map<std::string, std::optional<std::string>> result;
 
     CLoadResults modsLoad = modloader_get_all();
