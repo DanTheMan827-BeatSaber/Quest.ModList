@@ -2,13 +2,11 @@
 
 #include "library_utils.hpp"
 #include "logger.hpp"
-#include "main.hpp"
 using namespace ModList;
 
 // UnityEngine
 #include "UnityEngine/RectOffset.hpp"
 #include "UnityEngine/TextAnchor.hpp"
-#include "UnityEngine/Transform.hpp"
 using namespace UnityEngine;
 
 // UnityEngine::UI
@@ -36,7 +34,9 @@ struct ListItem {
 
 DEFINE_TYPE(ModList, ModListViewController);
 
-void CreateListWithTitle(TransformWrapper parent, std::string title, std::vector<ListItem> const& content) {
+void CreateListWithTitle(
+    TransformWrapper parent, TransformWrapper titleParent, float columnWidth, std::string title, std::vector<ListItem> const& content
+) {
     VerticalLayoutGroup* layout = CreateVerticalLayoutGroup(parent);
     layout->set_spacing(0.5);
     layout->set_childAlignment(UnityEngine::TextAnchor::UpperLeft);
@@ -44,20 +44,25 @@ void CreateListWithTitle(TransformWrapper parent, std::string title, std::vector
     layout->set_childControlHeight(true);
 
     // Create a layout for displaying the title.
-    VerticalLayoutGroup* titleLayout = CreateVerticalLayoutGroup(layout->get_rectTransform());
-    CreateText(titleLayout->get_rectTransform(), title)->set_alignment(TMPro::TextAlignmentOptions::Center);
-    CreateText(titleLayout->get_rectTransform(), "____________")
-        ->set_alignment(TMPro::TextAlignmentOptions::Center);  // This is a botch, but works alright.
-    titleLayout->GetComponent<LayoutElement*>()->set_minWidth(25.0);  // Make sure the list has a set width.
+    VerticalLayoutGroup* titleLayout = CreateVerticalLayoutGroup(titleParent);
+    titleLayout->set_childForceExpandHeight(false);
+    titleLayout->set_childControlHeight(true);
+    titleLayout->GetComponent<LayoutElement*>()->set_minWidth(columnWidth);  // Make sure the list has a set width.
+    titleLayout->GetComponent<LayoutElement*>()->set_preferredWidth(columnWidth);
+
+    // Create the title text
+    auto titleText = CreateText(titleLayout->get_rectTransform(), title);
+    titleText->set_alignment(TMPro::TextAlignmentOptions::BottomLeft);
+    titleText->set_overflowMode(TMPro::TextOverflowModes::Ellipsis);
 
     // Create a layout for the list itself
     VerticalLayoutGroup* listLayout = CreateVerticalLayoutGroup(layout->get_rectTransform());
-    listLayout->GetComponent<LayoutElement*>()->set_minWidth(25.0);  // Make sure the list has a set width.
-    listLayout->GetComponent<LayoutElement*>()->set_minHeight(40.0);  // Make sure the list takes up most of the space
+    listLayout->GetComponent<LayoutElement*>()->set_minWidth(columnWidth);  // Make sure the list has a set width.
+    listLayout->GetComponent<LayoutElement*>()->set_preferredWidth(columnWidth);
 
     // Add some padding so that the messages aren't totally squished
-    titleLayout->set_padding(UnityEngine::RectOffset::New_ctor(1, 1, 0, 0));
-    listLayout->set_padding(UnityEngine::RectOffset::New_ctor(1, 1, 1, 1));
+    titleLayout->set_padding(UnityEngine::RectOffset::New_ctor(0, 0, 0, 0));
+    listLayout->set_padding(UnityEngine::RectOffset::New_ctor(1, 1, 0, 2));
 
     // Make sure the list items are in the top left
     listLayout->set_childAlignment(UnityEngine::TextAnchor::UpperLeft);
@@ -67,6 +72,10 @@ void CreateListWithTitle(TransformWrapper parent, std::string title, std::vector
     // Create a line of text for each in the list
     for (auto const& element : content) {
         TMPro::TextMeshProUGUI* text = CreateText(listLayout->get_rectTransform(), element.content);
+
+        text->GetComponent<LayoutElement*>()->set_preferredWidth(columnWidth);
+        text->set_overflowMode(TMPro::TextOverflowModes::Ellipsis);
+
         // Add a hover hint if there is one
         if (!element.hoverHint.empty()) {
             AddHoverHint(text->get_gameObject(), element.hoverHint);
@@ -80,8 +89,53 @@ void ModListViewController::DidActivate(bool firstActivation, bool addedToHierar
         return;
     }
 
+    // Create the main vertical layout for the mod list
+    auto mainVerticalLayout = CreateVerticalLayoutGroup(get_rectTransform());
+    mainVerticalLayout->set_childAlignment(TextAnchor::UpperLeft);
+    mainVerticalLayout->set_childForceExpandHeight(false);
+    mainVerticalLayout->set_childForceExpandWidth(false);
+    mainVerticalLayout->set_childControlHeight(false);
+    mainVerticalLayout->set_padding(UnityEngine::RectOffset::New_ctor(0, 0, 0, 0));
+
+    // Create the horizontal layout for the titles
+    auto titleHorizontalLayout = CreateHorizontalLayoutGroup(mainVerticalLayout);
+    titleHorizontalLayout->set_childForceExpandHeight(false);
+    titleHorizontalLayout->set_childForceExpandWidth(false);
+    titleHorizontalLayout->set_childControlWidth(false);
+    titleHorizontalLayout->set_childControlHeight(true);
+    titleHorizontalLayout->set_childAlignment(TextAnchor::UpperLeft);
+    titleHorizontalLayout->set_padding(UnityEngine::RectOffset::New_ctor(0, 0, 0, -1));
+    titleHorizontalLayout->GetComponent<LayoutElement*>()->set_preferredWidth(160.0f);
+
+    // Create a separator between the titles and the lists
+    auto separatorHorizontalLayout = CreateHorizontalLayoutGroup(mainVerticalLayout);
+    separatorHorizontalLayout->GetComponent<LayoutElement*>()->set_preferredWidth(164.0f);
+    separatorHorizontalLayout->set_padding(UnityEngine::RectOffset::New_ctor(0, 0, 0, 0));
+
+    auto separator = CreateText(
+        separatorHorizontalLayout->get_rectTransform(),
+        "________________________________________________________________________________"
+        "________________________________________________________________________________"
+        "________________________________________________________________________________"
+        "________________________________________________________________________________"
+        "________________________________________________________________________________"
+        "________________________________________________________________________________"
+        "________________________________________________________________________________"
+        "________________________________________________________________________________"
+    );
+    separator->set_fontSize(1.0);
+    separator->set_overflowMode(TMPro::TextOverflowModes::Truncate);
+    separator->set_enableWordWrapping(false);
+
+    // Create the continaer layout for the scroll view
+    auto scrollLayout = CreateHorizontalLayoutGroup(mainVerticalLayout);
+    scrollLayout->set_childForceExpandHeight(true);
+    scrollLayout->set_childForceExpandWidth(true);
+    scrollLayout->GetComponent<LayoutElement*>()->set_preferredWidth(164.0f);
+    scrollLayout->GetComponent<LayoutElement*>()->set_preferredHeight(70.0f);
+
     // Allow the lists to be scrolled
-    UnityEngine::GameObject* scrollView = CreateScrollableSettingsContainer(get_rectTransform());
+    UnityEngine::GameObject* scrollView = CreateScrollableSettingsContainer(scrollLayout);
 
     // Create the main layout for the lists
     HorizontalLayoutGroup* mainLayout = CreateHorizontalLayoutGroup(scrollView->get_transform());
@@ -190,9 +244,9 @@ void ModListViewController::DidActivate(bool firstActivation, bool addedToHierar
     }
 
     // Create lists for each group
-    CreateListWithTitle(mainLayout, "Loaded Early Mods", loadedEarlyMods);
-    CreateListWithTitle(mainLayout, "Loaded Mods", loadedMods);
-    CreateListWithTitle(mainLayout, "Failed Early Mods", failedEarlyMods);
-    CreateListWithTitle(mainLayout, "Failed Mods", failedMods);
-    CreateListWithTitle(mainLayout, "Libraries", librariesList);
+    CreateListWithTitle(mainLayout, titleHorizontalLayout, 31.5, "Loaded Early Mods", loadedEarlyMods);
+    CreateListWithTitle(mainLayout, titleHorizontalLayout, 31.5, "Loaded Mods", loadedMods);
+    CreateListWithTitle(mainLayout, titleHorizontalLayout, 31.5, "Failed Early Mods", failedEarlyMods);
+    CreateListWithTitle(mainLayout, titleHorizontalLayout, 31.5, "Failed Mods", failedMods);
+    CreateListWithTitle(mainLayout, titleHorizontalLayout, 31.5, "Libraries", librariesList);
 }
