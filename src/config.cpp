@@ -9,8 +9,8 @@ void ConfigViewDidActivate(HMUI::ViewController* self, bool firstActivation, boo
     using namespace UnityEngine;
 
     if (firstActivation) {
-        UnityW<GameObject> container = BSML::Lite::CreateScrollableSettingsContainer(self->get_transform());
+        auto container = BSML::Lite::CreateScrollableSettingsContainer(self->get_transform());
 
-        AddConfigValueToggle(container->get_transform(), getConfig().showFailedOnStart);
+        AddConfigValueToggle(container, getConfig().showFailedOnStart);
     }
 }
