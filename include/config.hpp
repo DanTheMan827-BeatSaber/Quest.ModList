@@ -1,7 +1,9 @@
 #include "config-utils/shared/config-utils.hpp"
 #include "HMUI/ViewController.hpp"
 
-DECLARE_CONFIG(Config, CONFIG_VALUE(showFailedOnStart, bool, "Show failed mods pop-up at start", true, "Show failed mods pop-up in main menu"))
+DECLARE_CONFIG(Config) {
+    CONFIG_VALUE(showFailedOnStart, bool, "Show failed mods pop-up at start", true, "Show failed mods pop-up in main menu");
+};
 
 /**
  * @brief Activates the config view.
