@@ -3,7 +3,7 @@
   "_QPVersion": "0.1.1",
   "name": "${mod_name}",
   "id": "${mod_id}",
-  "coverImage": "cover.png",
+  "coverImage": "cover.jpg",
   "author": "Lauriethefish",
   "version": "${version}",
   "packageId": "com.beatgames.beatsaber",
