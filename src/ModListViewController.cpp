@@ -179,21 +179,21 @@ void ModListViewController::DidActivate(bool firstActivation, bool addedToHierar
     backgroundCanvas->anchoredPosition = {1, 4.14};
 
     // Draw our background image
-    auto background = CreateImage(backgroundCanvas, PNG_SPRITE(IncludedAssets::ModList::frame_png));
-    background->get_rectTransform()->sizeDelta = {159.5, 74.55};
-    background->get_rectTransform()->anchoredPosition = {-0.15, 0.15};
+    // auto background = CreateImage(backgroundCanvas, PNG_SPRITE(IncludedAssets::ModList::frame_png));
+    // background->get_rectTransform()->sizeDelta = {159.5, 74.55};
+    // background->get_rectTransform()->anchoredPosition = {-0.15, 0.15};
 
     // Draw a box around the perimeter of the canvas
-    // drawLine(backgroundCanvas, {0, 0.15}, {157.5, 0.15}, 0.3f)->name = "Top";
-    // drawLine(backgroundCanvas, {0, 0}, {0, 72.55}, 0.3f)->name = "Left";
-    // drawLine(backgroundCanvas, {157.5 - 0.3, 0}, {157.5 - 0.3, 72.55}, 0.3f)->name = "Right";
-    // drawLine(backgroundCanvas, {0, 72.55}, {157.5, 72.55}, 0.3f)->name = "Bottom";
-    // drawLine(backgroundCanvas, {0, 6.27}, {157.5, 6.27}, 0.3f)->name = "HorizontalDivider";
+    drawLine(backgroundCanvas, {0, 0.15}, {157.5, 0.15}, 0.3f)->name = "Top";
+    drawLine(backgroundCanvas, {0, 0}, {0, 72.55}, 0.3f)->name = "Left";
+    drawLine(backgroundCanvas, {157.5 - 0.3, 0}, {157.5 - 0.3, 72.55}, 0.3f)->name = "Right";
+    drawLine(backgroundCanvas, {0, 72.55}, {157.5, 72.55}, 0.3f)->name = "Bottom";
+    drawLine(backgroundCanvas, {0, 6.27}, {157.5, 6.27}, 0.3f)->name = "HorizontalDivider";
 
     // Draw our divider lines
-    // for (auto i = 1; i <= 4; i++) {
-    //    drawLine(backgroundCanvas, {(31.5f * i), 0}, {(31.5f * i), 72.55}, 0.3f)->name = fmt::format("VerticalDivider{}", i);
-    //}
+    for (auto i = 1; i <= 4; i++) {
+        drawLine(backgroundCanvas, {(31.5f * i), 0}, {(31.5f * i), 72.55}, 0.3f)->name = fmt::format("VerticalDivider{}", i);
+    }
 
     // Create the main layout for the lists
     auto mainLayout = CreateHorizontalLayoutGroup(scrollView);
