@@ -176,7 +176,7 @@ void ModListViewController::DidActivate(bool firstActivation, bool addedToHierar
 
     // Create a canvas for the background lines
     auto backgroundCanvas = createCanvas(mainStack, {159.5, 74.55}, {0, 0});
-    backgroundCanvas->anchoredPosition = {1, 4.14};
+    backgroundCanvas->anchoredPosition = {1, 3.14};
 
     // Draw our background image
     // auto background = CreateImage(backgroundCanvas, PNG_SPRITE(IncludedAssets::ModList::frame_png));
