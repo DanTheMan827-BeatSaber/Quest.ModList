@@ -81,17 +81,17 @@
     },
     {
       "id": "beatsaber-hook",
-      "versionRange": "^9.0.0",
+      "versionRange": "^9.3.0",
       "additionalData": {}
     },
     {
       "id": "bs-cordl",
-      "versionRange": "4502.*",
+      "versionRange": "4503.*",
       "additionalData": {}
     },
     {
       "id": "bsml",
-      "versionRange": "^0.6.2",
+      "versionRange": "^0.6.5",
       "additionalData": {}
     },
     {
@@ -101,7 +101,7 @@
     },
     {
       "id": "custom-types",
-      "versionRange": "^0.21.0",
+      "versionRange": "^0.21.2",
       "additionalData": {}
     },
     {
